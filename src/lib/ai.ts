@@ -57,10 +57,12 @@ function resolutionRules(o: Order, messages: Message[], evidence: Evidence[]): O
       ? { outcome: "partial", capture_amount: Math.round(amt * 0.5 * 100) / 100, reasoning: "The buyer says it didn't arrive, but the seller has shipping proof. Splitting the amount is fair until the parcel is traced.", source: "rules" }
       : { outcome: "refund", capture_amount: 0, reasoning: "The buyer says it never arrived and there's no tracking or delivery photo. Refund the buyer.", source: "rules" };
   }
-  const m = txt.match(/(\d+)\s*(?:of|out of)\s*(?:the\s*)?(\d+)/);
+  const m = txt.match(/(\d+)\s*(?:of|out of)\s*(?:the\s*)?(\d+)([^.!?]*)/);
   if (m && Number(m[2]) > 0 && Number(m[1]) < Number(m[2])) {
-    const ok = Number(m[1]) / Number(m[2]);
-    return { outcome: "partial", capture_amount: Math.round(amt * ok * 100) / 100, reasoning: `Only part of the order was fine (${m[1]} of ${m[2]}). The seller is paid for what arrived in good shape.`, source: "rules" };
+    const n = Number(m[1]), total = Number(m[2]);
+    const bad = /damag|broken|crushed|melted|spoil|wrong|torn|stain|defect|crack|leak|missing|bad|rotten|not/.test(m[3]) ? n : total - n;
+    const ok = (total - bad) / total;
+    return { outcome: "partial", capture_amount: Math.round(amt * ok * 100) / 100, reasoning: `${bad} of ${total} item(s) had a problem. The seller is paid for the ${total - bad} that arrived fine, and the buyer gets the rest back.`, source: "rules" };
   }
   if (/damag|broken|crushed|melted|spoil|wrong|torn|stain|defect|cracked|leak/.test(txt))
     return { outcome: "partial", capture_amount: Math.round(amt * 0.5 * 100) / 100, reasoning: "The item arrived but with a problem. A 50% partial refund covers the damage without the seller losing the whole sale.", source: "rules" };

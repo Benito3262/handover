@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   const model = m && /^[a-z0-9-]+\/[a-z0-9.\-]+$/.test(m) ? m : appModel();
   const label = m || aiLabel();
   return withSeller(async () => {
-    if (!aiConfigured()) return { ok: false, reason: "No AI Gateway credentials (rules fallback active)" };
+    if (!aiConfigured()) return { ok: false, reason: "No AI key set (rules fallback active). Set AI_API_KEY (free Gemini key) or enable AI Gateway." };
     try {
       const r = await generateText({ model, prompt: "Reply with the word OK." , maxOutputTokens: 5 });
       return { ok: true, model: label, text: r.text, oidc: Boolean(process.env.VERCEL_OIDC_TOKEN) };
