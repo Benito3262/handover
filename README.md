@@ -113,7 +113,7 @@ All model calls use the **Vercel AI SDK** (`generateText`, tools, `Output.object
 
 Two free ways to switch the AI on (no code change):
 
-1. **Google Gemini free tier (no card):** create a key at https://aistudio.google.com/apikey and set `AI_API_KEY` (optional `AI_MODEL`, default `gemini-2.5-flash`). It's called through Gemini's OpenAI-compatible endpoint with `@ai-sdk/openai-compatible`. Any other OpenAI-compatible host works via `AI_BASE_URL`.
+1. **Google Gemini free tier (no card):** create a key at https://aistudio.google.com/apikey and set `AI_API_KEY` (optional `AI_MODEL`, default `gemini-3.5-flash-lite`). It's called through Gemini's OpenAI-compatible endpoint with `@ai-sdk/openai-compatible`. Any other OpenAI-compatible host works via `AI_BASE_URL`.
 2. **Vercel AI Gateway:** set `AI_GATEWAY_ENABLED=1` (OIDC on Vercel) or `AI_GATEWAY_API_KEY`. Model via `AI_GATEWAY_MODEL` (default `spacexai/grok-4.1-fast-non-reasoning`). Note: Vercel only unlocks the free Gateway credits once a card is on file for the team.
 
 `/api/ai-status` (signed-in sellers) makes one tiny test call and reports whether AI is live.
@@ -144,7 +144,7 @@ Data lives in five tables (`ho_sellers`, `ho_orders`, `ho_order_events`, `ho_mes
 | `PAYPAL_API_BASE` | no | defaults to `https://api-m.sandbox.paypal.com` |
 | `AI_API_KEY` | to enable AI (free) | Google AI Studio key, or any OpenAI-compatible key |
 | `AI_BASE_URL` | no | defaults to Gemini's OpenAI-compatible endpoint |
-| `AI_MODEL` | no | defaults to `gemini-2.5-flash` |
+| `AI_MODEL` | no | defaults to `gemini-3.5-flash-lite` |
 | `AI_GATEWAY_ENABLED` / `AI_GATEWAY_API_KEY` | alternative | Vercel AI Gateway (needs Gateway credits enabled) |
 | `AI_GATEWAY_MODEL` | no | any `provider/model` from `https://ai-gateway.vercel.sh/v1/models` |
 | `CRON_SECRET` | recommended | protects `/api/cron/sweep` |

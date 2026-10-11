@@ -10,6 +10,9 @@ import type { Evidence, InvoiceDraft, Message, Order, Resolution } from "./types
 // OIDC auth on Vercel). Every function has a deterministic fallback.
 
 let compat: ReturnType<typeof createOpenAICompatible> | null = null;
+// Keep AI snappy: one retry, 20s cap, then the rules fallback takes over.
+export const aiOpts = () => ({ maxRetries: 1, abortSignal: AbortSignal.timeout(20_000) });
+
 export const model = () => {
   if (aiProvider.key) {
     compat ??= createOpenAICompatible({ name: "ai", apiKey: aiProvider.key, baseURL: aiProvider.baseURL, supportsStructuredOutputs: true });
@@ -24,6 +27,7 @@ export async function aiParseInvoice(text: string): Promise<InvoiceDraft & { war
   try {
     const today = new Date().toISOString().slice(0, 10);
     const { output } = await generateText({
+      ...aiOpts(),
       model: model(),
       output: Output.object({
         schema: z.object({
@@ -85,6 +89,7 @@ export async function suggestResolution(o: Order, messages: Message[], evidence:
     const ev = evidence.map((e) => `[${e.author} ${e.kind}] ${e.caption || ""}`).join("\n");
     const images = evidence.filter((e) => e.image_data).slice(-3).map((e) => dataUrlToFile(e.image_data!)).filter(Boolean) as { type: "file"; mediaType: string; data: Buffer }[];
     const { output } = await generateText({
+      ...aiOpts(),
       model: model(),
       output: Output.object({
         schema: z.object({
@@ -117,6 +122,7 @@ export async function draftDisputeReply(o: Order, messages: Message[]) {
   if (!aiConfigured()) return { text: fallback, source: "rules" as const };
   try {
     const { text } = await generateText({
+      ...aiOpts(),
       model: model(),
       system: "Write a short, warm, professional reply from a small seller to a buyer who raised a problem. Max 90 words. No placeholders. Don't promise anything the seller didn't offer; suggest a next step.",
       prompt: `Order #${o.number}: ${o.items.map((i) => `${i.qty} x ${i.name}`).join(", ")} (${fmt(o.amount, o.currency)}). Shipped: ${o.shipped_at ? "yes" : "no"}${o.tracking ? `, tracking ${o.tracking}` : ""}.\nComplaint: ${o.dispute?.reason || "(none)"}\nThread:\n${messages.map((m) => `[${m.author}] ${m.body}`).join("\n")}`,
@@ -153,6 +159,7 @@ export async function weeklySummary(orders: Order[]) {
   if (!aiConfigured()) return { text: fallback, source: "rules" as const };
   try {
     const { text } = await generateText({
+      ...aiOpts(),
       model: model(),
       system: "You're a friendly business coach for a small seller. Using ONLY these facts, write a short weekly summary: 1 sentence on how the week went, then 2-3 bullet points of what to do next (who to chase, what to ship, disputes to answer). Under 110 words. Plain text, bullets with '- '.",
       prompt: lines.join("\n"),

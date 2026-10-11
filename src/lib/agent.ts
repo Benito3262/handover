@@ -1,7 +1,7 @@
 import { generateText, tool, isStepCount, type ModelMessage } from "ai";
 import { z } from "zod";
 import { aiConfigured } from "./env";
-import { aiParseInvoice, draftDisputeReply, model, summaryFacts, weeklySummary } from "./ai";
+import { aiOpts, aiParseInvoice, draftDisputeReply, model, summaryFacts, weeklySummary } from "./ai";
 import { routeIntent } from "./parser";
 import { createOrder, fmt, getOrderByNumber, markShipped, orderThread, remindBuyer, sellerConfirm, sellerOrders, stats, STATUS_LABEL, OPEN_STATUSES } from "./orders";
 import type { InvoiceDraft, Order, Seller } from "./types";
@@ -99,6 +99,7 @@ export async function runAssistant(seller: Seller, history: { role: "user" | "as
     try {
       const today = new Date();
       const result = await generateText({
+        ...aiOpts(),
         model: model(),
         system: `You are Handover's assistant for ${seller.name}, a small seller. Buyers' money is held by PayPal (authorized) and only released when both sides confirm delivery. Use tools to act on real data; never invent orders or numbers. Today is ${today.toISOString().slice(0, 10)} (${today.toLocaleDateString("en-US", { weekday: "long" })}). Reply in short, friendly plain text (no markdown tables). After creating an invoice, give the buyer link. Default currency USD.`,
         messages: history.slice(-12) as ModelMessage[],

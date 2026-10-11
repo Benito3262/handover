@@ -19,7 +19,7 @@ export const dbConfigured = () => Boolean(env.supabaseUrl && env.supabaseKey && 
 export const aiProvider = {
   key: process.env.AI_API_KEY || "",
   baseURL: process.env.AI_BASE_URL || "https://generativelanguage.googleapis.com/v1beta/openai",
-  model: process.env.AI_MODEL || "gemini-2.5-flash",
+  model: process.env.AI_MODEL || "gemini-3.5-flash-lite",
 };
 export const aiConfigured = () =>
   Boolean(aiProvider.key || process.env.AI_GATEWAY_API_KEY || process.env.AI_GATEWAY_ENABLED === "1");
