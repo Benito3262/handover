@@ -17,7 +17,8 @@ export const dbConfigured = () => Boolean(env.supabaseUrl && env.supabaseKey && 
 //  - AI_GATEWAY_API_KEY is set, or AI_GATEWAY_ENABLED=1 on Vercel (OIDC; the team needs AI Gateway credits enabled).
 // Otherwise every AI feature uses its deterministic fallback.
 export const aiProvider = {
-  key: process.env.AI_API_KEY || "",
+  // GEMINI_API_KEY (or a var named "Gemini") wins over AI_API_KEY when both are set.
+  key: process.env.GEMINI_API_KEY || process.env.Gemini || process.env.AI_API_KEY || "",
   baseURL: process.env.AI_BASE_URL || "https://generativelanguage.googleapis.com/v1beta/openai",
   model: process.env.AI_MODEL || "gemini-3.5-flash-lite",
 };
