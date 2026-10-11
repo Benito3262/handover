@@ -34,7 +34,8 @@ export async function aiParseInvoice(text: string): Promise<InvoiceDraft & { war
     });
     if (!output || !(output.amount > 0) || !output.buyer_name) return fallback;
     return { ...output, currency: output.currency.toUpperCase(), source: "ai" };
-  } catch {
+  } catch (e) {
+    console.error("AI fallback:", (e as Error).message);
     return fallback;
   }
 }
@@ -95,7 +96,8 @@ export async function suggestResolution(o: Order, messages: Message[], evidence:
     });
     if (!output) return fallback;
     return { ...output, capture_amount: Math.min(Number(o.amount), Math.max(0, output.outcome === "refund" ? 0 : output.outcome === "release" ? Number(o.amount) : output.capture_amount)), source: "ai" as const };
-  } catch {
+  } catch (e) {
+    console.error("AI fallback:", (e as Error).message);
     return fallback;
   }
 }
@@ -110,7 +112,8 @@ export async function draftDisputeReply(o: Order, messages: Message[]) {
       prompt: `Order #${o.number}: ${o.items.map((i) => `${i.qty} x ${i.name}`).join(", ")} (${fmt(o.amount, o.currency)}). Shipped: ${o.shipped_at ? "yes" : "no"}${o.tracking ? `, tracking ${o.tracking}` : ""}.\nComplaint: ${o.dispute?.reason || "(none)"}\nThread:\n${messages.map((m) => `[${m.author}] ${m.body}`).join("\n")}`,
     });
     return { text: text.trim() || fallback, source: "ai" as const };
-  } catch {
+  } catch (e) {
+    console.error("AI fallback:", (e as Error).message);
     return { text: fallback, source: "rules" as const };
   }
 }
@@ -145,7 +148,8 @@ export async function weeklySummary(orders: Order[]) {
       prompt: lines.join("\n"),
     });
     return { text: text.trim() || fallback, source: "ai" as const };
-  } catch {
+  } catch (e) {
+    console.error("AI fallback:", (e as Error).message);
     return { text: fallback, source: "rules" as const };
   }
 }

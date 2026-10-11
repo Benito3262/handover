@@ -99,6 +99,12 @@ export function parseInvoice(text: string, now = new Date()): InvoiceDraft & { w
     const chunk = fm[1].replace(money?.raw ?? "@@", " ").replace(/\b(each|apiece|per item)\b/gi, " ").replace(/\s+(at|@)\s*$/i, "").replace(/\s+(at|@)\s+/gi, " ").replace(/\s{2,}/g, " ").trim();
     items = chunk.split(/\s*(?:,|\band\b|\+|&)\s*/i).map(cleanItem).filter((i): i is Item => !!i && !/^(each|total)$/i.test(i.name));
   }
+  if (!items.length && money) {
+    // "3 jars of honey at $12 each" / "2 cakes $50" without "for"
+    const before = text.slice(0, money.index).replace(email ?? "@@", " ");
+    const im = before.match(/(\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten|twelve)\s+([A-Za-z][\w\s'-]{1,60}?)\s*(?:at|@|for|,)?\s*$/i);
+    if (im) { const it = cleanItem(`${im[1]} ${im[2]}`); if (it) items = [it]; }
+  }
   if (!items.length) items = [{ name: "Order", qty: 1, unit_price: 0 }];
 
   let amount = 0;
