@@ -28,9 +28,12 @@ export function parseDate(text: string, now = new Date()): string | null {
     if (d.getTime() < now.getTime() - 86400000) d = new Date(Date.UTC(now.getUTCFullYear() + 1, mon, day));
     return iso(d);
   }
-  const wd = t.match(/\b(next\s+)?(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/);
+  const wd = [...t.matchAll(/\b(next\s+)?(sun|mon|tue|wed|thu|fri|sat)[a-z]*\b/g)].find((w) => {
+    const word = w[0].replace(/^next\s+/, "");
+    return DAYS.includes(word) || /^(sun|mon|tues?|weds?|thu|thur|thurs|fri|sat)$/.test(word);
+  });
   if (wd) {
-    const target = DAYS.indexOf(wd[2]);
+    const target = DAYS.findIndex((d) => d.startsWith(wd[2]));
     let diff = (target - now.getDay() + 7) % 7;
     if (diff === 0) diff = 7;
     if (wd[1]) diff += diff < 7 ? 7 : 0;
@@ -43,13 +46,18 @@ export function parseDate(text: string, now = new Date()): string | null {
 function findMoney(text: string): { amount: number; currency: string; each: boolean; index: number; raw: string } | null {
   const re = /(US\$|C\$|A\$|[$€£¥₦])\s?(\d[\d,]*(?:\.\d{1,2})?)\s*(k\b)?|(\d[\d,]*(?:\.\d{1,2})?)\s*(k\b)?\s*(usd|eur|gbp|cad|aud|jpy|ngn|dollars?|euros?|pounds?|yen|naira)\b|\b(usd|eur|gbp|cad|aud|jpy|ngn)\s?(\d[\d,]*(?:\.\d{1,2})?)/i;
   const m = text.match(re);
-  if (!m) return null;
+  if (!m) {
+    // Bare numbers: "35 each", "at 35", "@35"
+    const b = text.match(/(?:\b(?:at|@)\s*|@)(\d[\d,]*(?:\.\d{1,2})?)\b(\s*(?:each|apiece|per|ea)\b)?|\b(\d[\d,]*(?:\.\d{1,2})?)\s*(?:each|apiece|ea)\b/i);
+    if (!b) return null;
+    return { amount: Number((b[1] ?? b[3]).replace(/,/g, "")), currency: "USD", each: true, index: b.index ?? 0, raw: b[0].trim() };
+  }
   let amount: number, currency: string;
   if (m[1]) { amount = Number(m[2].replace(/,/g, "")) * (m[3] ? 1000 : 1); currency = SYMBOLS[m[1]]; }
   else if (m[4]) { amount = Number(m[4].replace(/,/g, "")) * (m[5] ? 1000 : 1); currency = WORDS[m[6].toLowerCase()] || m[6].toUpperCase(); }
   else { amount = Number(m[8].replace(/,/g, "")); currency = m[7].toUpperCase(); }
   const after = text.slice((m.index ?? 0) + m[0].length, (m.index ?? 0) + m[0].length + 12).toLowerCase();
-  return { amount, currency, each: /^\s*(each|apiece|per|\/ea|ea\b)/.test(after), index: m.index ?? 0, raw: m[0] };
+  return { amount, currency, each: /^\s*(each|apiece|per|\/ea|ea\b)/.test(after), index: m.index ?? 0, raw: m[0].trim() };
 }
 
 function cleanItem(s: string): Item | null {
@@ -157,7 +165,7 @@ export function routeIntent(text: string): Intent {
   const t = text.trim();
   const low = t.toLowerCase();
   const num = low.match(/(?:order|#)\s*#?(\d+)/)?.[1];
-  if (/^(invoice|bill|charge|send (an )?invoice|new order|request payment)\b/.test(low)) return { kind: "create_invoice", text: t };
+  if (/^(?:(?:pls|please|plz|kindly|can you|could you|hey)[,!]?\s+)*(invoice|bill|charge|send (an )?invoice|new order|request payment)\b/.test(low)) return { kind: "create_invoice", text: t };
   if (/(who|which).*(hasn'?t|not|haven'?t|didn'?t).*(pa(id|y))|unpaid|outstanding|owe/.test(low)) return { kind: "unpaid" };
   if (/held|on hold|escrow|holding|pending money|money.*(held|waiting)/.test(low)) return { kind: "held" };
   const rem = low.match(/\b(?:remind|nudge|chase|ping)\s+(.+?)(?:\s+(?:to|about|that)\b.*)?$/);
