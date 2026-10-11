@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo, DemoPaymentBanner } from "@/components/ui";
-import { paypalConfigured, aiConfigured } from "@/lib/env";
+import { paypalConfigured, aiConfigured, aiLabel } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export default function Judges() {
         <h1 className="text-4xl font-extrabold">Judge quick start</h1>
         <div className="flex flex-wrap gap-2 text-xs">
           <span className={`rounded-full border px-3 py-1 ${pp ? "border-brand/40 text-brand" : "border-warn/40 text-warn"}`}>PayPal: {pp ? "sandbox connected" : "demo payments (sandbox not connected)"}</span>
-          <span className={`rounded-full border px-3 py-1 ${ai ? "border-brand/40 text-brand" : "border-warn/40 text-warn"}`}>AI: {ai ? "Vercel AI Gateway" : "rules fallback"}</span>
+          <span className={`rounded-full border px-3 py-1 ${ai ? "border-brand/40 text-brand" : "border-warn/40 text-warn"}`}>AI: {ai ? aiLabel() : "rules fallback (no AI key set)"}</span>
         </div>
         {!pp && <DemoPaymentBanner />}
         <ol className="space-y-4">

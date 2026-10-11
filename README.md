@@ -109,7 +109,14 @@ All code is in [`src/lib/paypal.ts`](src/lib/paypal.ts). When `PAYPAL_CLIENT_ID`
 
 ## AI usage
 
-All model calls use the **Vercel AI SDK** through **Vercel AI Gateway** (OIDC on Vercel, default model `spacexai/grok-4.1-fast-non-reasoning`, override with `AI_GATEWAY_MODEL`). Every AI feature has a deterministic fallback, so the app works with no model at all.
+All model calls use the **Vercel AI SDK** (`generateText`, tools, `Output.object`). Every AI feature has a deterministic fallback, so the app works fully with no model at all (that's how the live demo runs until a key is added).
+
+Two free ways to switch the AI on (no code change):
+
+1. **Google Gemini free tier (no card):** create a key at https://aistudio.google.com/apikey and set `AI_API_KEY` (optional `AI_MODEL`, default `gemini-2.5-flash`). It's called through Gemini's OpenAI-compatible endpoint with `@ai-sdk/openai-compatible`. Any other OpenAI-compatible host works via `AI_BASE_URL`.
+2. **Vercel AI Gateway:** set `AI_GATEWAY_ENABLED=1` (OIDC on Vercel) or `AI_GATEWAY_API_KEY`. Model via `AI_GATEWAY_MODEL` (default `spacexai/grok-4.1-fast-non-reasoning`). Note: Vercel only unlocks the free Gateway credits once a card is on file for the team.
+
+`/api/ai-status` (signed-in sellers) makes one tiny test call and reports whether AI is live.
 
 | Feature | AI | Fallback |
 | --- | --- | --- |
@@ -120,7 +127,7 @@ All model calls use the **Vercel AI SDK** through **Vercel AI Gateway** (OIDC on
 
 ## Tech
 
-Next.js 16 (App Router) + Tailwind v4 on Vercel · Supabase Postgres via PostgREST · Vercel AI SDK 7 + AI Gateway · PayPal REST sandbox + JS SDK. All free tiers.
+Next.js 16 (App Router) + Tailwind v4 on Vercel · Supabase Postgres via PostgREST · Vercel AI SDK 7 (Gemini free tier or AI Gateway) · PayPal REST sandbox + JS SDK. All free tiers.
 
 Data lives in five tables (`ho_sellers`, `ho_orders`, `ho_order_events`, `ho_messages`, `ho_evidence`), schema in [`supabase/schema.sql`](supabase/schema.sql). Server code talks to PostgREST with the publishable key plus a secret `x-handover-key` header, and RLS rejects any request without it, so the browser never touches the database directly. Photos are resized in the browser and stored as small JPEG data URLs.
 
@@ -135,7 +142,10 @@ Data lives in five tables (`ho_sellers`, `ho_orders`, `ho_order_events`, `ho_mes
 | `PAYPAL_CLIENT_ID` | for real sandbox | developer.paypal.com → Apps & Credentials → Sandbox app |
 | `PAYPAL_CLIENT_SECRET` | for real sandbox | same app |
 | `PAYPAL_API_BASE` | no | defaults to `https://api-m.sandbox.paypal.com` |
-| `AI_GATEWAY_API_KEY` | local only | not needed on Vercel (OIDC) |
+| `AI_API_KEY` | to enable AI (free) | Google AI Studio key, or any OpenAI-compatible key |
+| `AI_BASE_URL` | no | defaults to Gemini's OpenAI-compatible endpoint |
+| `AI_MODEL` | no | defaults to `gemini-2.5-flash` |
+| `AI_GATEWAY_ENABLED` / `AI_GATEWAY_API_KEY` | alternative | Vercel AI Gateway (needs Gateway credits enabled) |
 | `AI_GATEWAY_MODEL` | no | any `provider/model` from `https://ai-gateway.vercel.sh/v1/models` |
 | `CRON_SECRET` | recommended | protects `/api/cron/sweep` |
 

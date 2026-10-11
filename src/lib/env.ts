@@ -12,7 +12,17 @@ export const env = {
 
 export const paypalConfigured = () => Boolean(env.paypalClientId && env.paypalSecret);
 export const dbConfigured = () => Boolean(env.supabaseUrl && env.supabaseKey && env.dbKey);
+// AI is used when either:
+//  - AI_API_KEY is set: any OpenAI-compatible endpoint (default: Google Gemini's free tier), or
+//  - AI_GATEWAY_API_KEY is set, or AI_GATEWAY_ENABLED=1 on Vercel (OIDC; the team needs AI Gateway credits enabled).
+// Otherwise every AI feature uses its deterministic fallback.
+export const aiProvider = {
+  key: process.env.AI_API_KEY || "",
+  baseURL: process.env.AI_BASE_URL || "https://generativelanguage.googleapis.com/v1beta/openai",
+  model: process.env.AI_MODEL || "gemini-2.5-flash",
+};
 export const aiConfigured = () =>
-  Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL);
+  Boolean(aiProvider.key || process.env.AI_GATEWAY_API_KEY || process.env.AI_GATEWAY_ENABLED === "1");
+export const aiLabel = () => (aiProvider.key ? `${aiProvider.model} (OpenAI-compatible)` : `Vercel AI Gateway · ${env.aiModel}`);
 
 export const SUPPORTED_CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "CHF", "SGD", "HKD", "NZD", "SEK", "NOK", "DKK", "PLN", "MXN", "BRL"];

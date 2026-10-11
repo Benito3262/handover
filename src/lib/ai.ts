@@ -1,6 +1,7 @@
 import { generateText, Output, tool, isStepCount } from "ai";
 import { z } from "zod";
-import { aiConfigured, env } from "./env";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { aiConfigured, aiProvider, env } from "./env";
 import { parseInvoice } from "./parser";
 import { fmt, stats, STATUS_LABEL } from "./orders";
 import type { Evidence, InvoiceDraft, Message, Order, Resolution } from "./types";
@@ -8,7 +9,14 @@ import type { Evidence, InvoiceDraft, Message, Order, Resolution } from "./types
 // All model calls go through Vercel AI Gateway (plain "provider/model" string,
 // OIDC auth on Vercel). Every function has a deterministic fallback.
 
-export const model = () => env.aiModel;
+let compat: ReturnType<typeof createOpenAICompatible> | null = null;
+export const model = () => {
+  if (aiProvider.key) {
+    compat ??= createOpenAICompatible({ name: "ai", apiKey: aiProvider.key, baseURL: aiProvider.baseURL, supportsStructuredOutputs: true });
+    return compat.chatModel(aiProvider.model);
+  }
+  return env.aiModel;
+};
 
 export async function aiParseInvoice(text: string): Promise<InvoiceDraft & { warnings: string[]; source: "ai" | "rules" }> {
   const fallback = { ...parseInvoice(text), source: "rules" as const };
