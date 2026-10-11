@@ -118,7 +118,7 @@ export async function runAssistant(seller: Seller, history: { role: "user" | "as
             }),
             execute: async (d) => op.createInvoice({ ...d, currency: d.currency || "USD" }),
           }),
-          list_orders: tool({ description: "List recent orders, optionally by status (created, held, shipped, delivered, disputed, settled, partially_settled, refunded, cancelled).", inputSchema: z.object({ status: z.string().nullable() }), execute: async ({ status }) => op.list(status ?? undefined) }),
+          list_orders: tool({ description: "List recent orders, optionally by status (created, held, shipped, delivered, disputed, settled, partially_settled, refunded, cancelled).", inputSchema: z.object({ status: z.string().nullable().describe("Leave null for all orders.") }), execute: async ({ status }) => { const known = ["created", "held", "shipped", "delivered", "disputed", "settled", "partially_settled", "refunded", "cancelled"]; const s = status?.toLowerCase().trim(); return op.list(s && known.includes(s) ? s : undefined); } }),
           unpaid_invoices: tool({ description: "Who hasn't paid yet.", inputSchema: z.object({}), execute: async () => op.unpaid() }),
           held_money: tool({ description: "Money currently held (paid but not yet released) and totals.", inputSchema: z.object({}), execute: async () => op.held() }),
           remind_buyer: tool({ description: "Send a reminder to a buyer, by name or order number.", inputSchema: z.object({ who: z.string() }), execute: async ({ who }) => op.remind(who) }),
